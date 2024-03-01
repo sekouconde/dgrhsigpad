@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enregistrement Signature</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+    }
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .input-group {
+        margin-bottom: 20px;
+    }
+    .input-group label {
+        display: block;
+        margin-bottom: 5px;
+    }
+    .input-group input[type="text"],
+    .input-group textarea {
+        width: 100%;
+        padding: 8px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+    }
+    .image-preview {
+        margin-top: 20px;
+        display: none;
+    }
+    .image-preview img {
+        max-width: 100%;
+        height: auto;
+    }
+    .button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Convertir Base64 en image avec fond effacé</h1>
+
+    <div class="input-group">
+        <label for="base64String">Chaîne Base64 :</label>
+        <textarea id="base64String" rows="5"></textarea>
+    </div>
+
+    <button class="button" onclick="convertToImage()">Convertir en image avec fond effacé</button>
+
+    <div class="image-preview" id="imagePreview">
+        <label>Aperçu de l'image :</label>
+        <img id="previewImg" src="" alt="Image Preview">
+    </div>
+
+    <div class="input-group">
+        <label for="fileName">Nom du fichier :</label>
+        <input type="text" id="fileName" placeholder="Nom de fichier.png">
+    </div>
+
+    <button class="button" onclick="saveImage()">Enregistrer l'image</button>
+</div>
+
+<script>
+function convertToImage() {
+    var base64String = document.getElementById('base64String').value;
+    var canvas = document.createElement('canvas');
+    canvas.width = 1383;
+    canvas.height = 891;
+    var ctx = canvas.getContext('2d');
+    // Créer une nouvelle image à partir de la chaîne Base64
+    var img = new Image();
+    img.onload = function() {
+        // Dessiner l'image sur le canvas
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // Effacer le fond de l'image (rendre les pixels blancs transparents)
+        var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        var data = imageData.data;
+        var seuil = 150; // Seuil de tolérance de couleur pour le fond (0-255)
+        for (var i = 0; i < data.length; i += 4) {
+            var red = data[i];
+            var green = data[i + 1];
+            var blue = data[i + 2];
+            // Vérifier si la couleur est proche de blanc (fond)
+            if (red >= 255 - seuil && green >= 255 - seuil && blue >= 255 - seuil) {
+                // Effacer le pixel en le rendant transparent (l'alpha à 0)
+                data[i + 3] = 0; // Alpha
+            }
+        }
+        // Réécrire les données de l'image avec le fond effacé
+        ctx.putImageData(imageData, 0, 0);
+        // Obtenir la représentation de l'image avec fond effacé au format base64
+        var imageWithTransparentBG = canvas.toDataURL('image/png');
+
+        // Afficher l'aperçu de l'image avec fond effacé
+        document.getElementById('imagePreview').style.display = 'block';
+        document.getElementById('previewImg').src = imageWithTransparentBG;
+
+        // Stocker l'image générée dans une variable globale
+        window.generatedImage = imageWithTransparentBG;
+    };
+    img.src = 'data:image/png;base64,' + base64String;
+}
+
+function saveImage() {
+    var fileName = document.getElementById('fileName').value;
+    if (!fileName) {
+        alert('Veuillez spécifier un nom de fichier.');
+        return;
+    }
+
+    if (!window.generatedImage) {
+        alert('Veuillez d\'abord convertir une image.');
+        return;
+    }
+
+    var link = document.createElement('a');
+    link.href = window.generatedImage;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+
+</body>
+</
